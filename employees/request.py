@@ -1,31 +1,29 @@
-EMPLOYEES=[
-      {
-      "id": 4,
-      "name": "Jack",
-      "locationId": 1
-    },
-    {
-      "id": 1,
-      "name": "John",
-      "locationId": 1
-    },
-    {
-      "id": 2,
-      "name": "Jim",
-      "locationId": 2
-    }  
-]
+import sqlite3
+import json
+from models import Employee
 
 def get_all_employees():
-    return EMPLOYEES
+  with sqlite3.connect("./Kennel.db") as conn:
+    conn.row_factory = sqlite3.Row
+    db_cursor = conn.cursor()
+    db_cursor.execute("""
+    SELECT * FROM Employee""")
+    employees=[]
+    dataset=db_cursor.fetchall()
+    for row in dataset:
+      employee=Employee(row['id'], row['name'], row['address'], row['location_id'])
+      employees.append(employee.__dict__)
+  return json.dumps(employees)
 
 def get_single_employee(id):
-    requested_employee=None
-    for employee in EMPLOYEES:
-        if employee["id"]==id:
-            requested_employee=employee
-
-    return requested_employee
+  with sqlite3.connect("./Kennel.db") as conn:
+    conn.row_factory = sqlite3.Row
+    db_cursor = conn.cursor()
+    db_cursor.execute("""
+    SELECT * FROM Employee WHERE id=?""", (id,))
+    data=db_cursor.fetchone()
+    employee=Employee(data['id'], data['name'], data['address'], data['location_id'])
+  return json.dumps(employee.__dict__)
 
 def create_employee(employee):
   max_id=EMPLOYEES[-1]["id"]
@@ -47,3 +45,16 @@ def update_employee(id, new_employee):
     if employee["id"]==id:
       EMPLOYEES[index]= new_employee
       break
+
+def get_employee_by_location(location_id):
+  with sqlite3.connect("./Kennel.db") as conn:
+        conn.row_factory=sqlite3.Row
+        db_cursor=conn.cursor()
+        db_cursor.execute("""SELECT * FROM Employee 
+                          WHERE location_id=?""", (location_id))
+        employees_at_location=[]
+        dataset=db_cursor.fetchall()
+        for row in dataset:
+            employee=Employee(row['id'], row['name'])
+            employees_at_location.append(employee.__dict__)
+        return json.dumps(employees_at_location)

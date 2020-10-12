@@ -1,25 +1,27 @@
-LOCATIONS=[
-    {
-      "id": 1,
-      "name": "Nashville North",
-      "address": "8422 Johnson Pike"
-    },
-    {
-      "id": 2,
-      "name": "Nashville South",
-      "address": "209 Emory Drive"
-    }
-]
+import sqlite3
+import json
+from models import Location
 
 def get_all_locations():
-    return LOCATIONS
+  with sqlite3.connect("./Kennel.db") as conn:
+    conn.row_factory = sqlite3.Row
+    db_cursor = conn.cursor()
+    db_cursor.execute("""SELECT * FROM Location""")
+    locations=[]
+    dataset=db_cursor.fetchall()
+    for row in dataset:
+      location=Location(row['id'], row['name'], row['address'])
+      locations.append(location.__dict__)
+  return json.dumps(locations)
 
 def get_single_location(id):
-    request_location=None
-    for location in LOCATIONS:
-        if location["id"]==id:
-            request_location=location
-    return request_location
+  with sqlite3.connect("./Kennel.db") as conn:
+    conn.row_factory = sqlite3.Row
+    db_cursor = conn.cursor()
+    db_cursor.execute("""SELECT * FROM Location WHERE id=?""", (id,))
+    data=db_cursor.fetchone()
+    location=Location(data['id'], data['name'], data['address'])
+    return json.dumps(location.__dict__)
 
 def  create_location(location):
   max_id=LOCATIONS[-1]["id"]
